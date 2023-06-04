@@ -1,5 +1,5 @@
 [package]
-name = "my_emails"
+name = "emailsched"
 version = "0.1.0"
 edition = "2021"
 

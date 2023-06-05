@@ -12,7 +12,7 @@ impl Displayable for Event {
             format!("\u{1F4C5}{}", self.date_time.year).yellow(),
             format!("{:02}", self.date_time.month).yellow(),
             format!("{:02}", self.date_time.day).yellow(),
-            format!("\u{23f0}{:02}", self.date_time.hour).green(),
+            format!("\u{1f551}{:02}", self.date_time.hour).green(),
             format!("{:02}", self.date_time.minute).green(),
         );
         let sanitized = self.sanitize();

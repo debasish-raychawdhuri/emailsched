@@ -124,7 +124,25 @@ pub struct Event {
     pub date_time: DateTime,
     pub text: HashMap<String, String>,
 }
+impl Event {
+    pub fn sanitize(&self) -> Event {
+        let mut text = self.text.clone();
 
+        let regex = Regex::new(r"\s+").unwrap();
+        text.insert("Title".to_string(), {
+            let line_text = text
+                .get("Title")
+                .unwrap()
+                .replace("\n", " ")
+                .replace("\r", " ");
+            regex.replace_all(&line_text, " ").to_string()
+        });
+        Event {
+            date_time: self.date_time.clone(),
+            text,
+        }
+    }
+}
 fn extract_all_text_fields(email: &Email, text_fields: &[TextField]) -> HashMap<String, String> {
     let mut map = HashMap::new();
     text_fields.iter().for_each(|tf| {

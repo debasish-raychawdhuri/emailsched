@@ -29,13 +29,19 @@ pub struct EmailTemplate {
 pub struct Config {
     pub username: String,
     pub password: String,
+    pub imap_server: String,
+    pub imap_port: u16,
+    pub data_store: String,
     pub email_templates: Vec<EmailTemplate>,
 }
 
-pub fn read_config() -> Config {
+pub fn config_dir() -> String {
     let home = std::env::var("HOME").unwrap();
-    let config_str =
-        std::fs::read_to_string(format!("{}/.config/emailsched/Config.toml", home)).unwrap();
+    format!("{}/.config/emailsched", home)
+}
+
+pub fn read_config() -> Config {
+    let config_str = std::fs::read_to_string(format!("{}/Config.toml", config_dir())).unwrap();
     let config = toml::from_str(&config_str);
     if let Ok(config) = config {
         config

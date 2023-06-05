@@ -57,7 +57,8 @@ pub fn fetch_inbox_top(
     config: &crate::config::Config,
 ) -> Result<Vec<Option<Email>>, Box<dyn Error>> {
     let client: Client<TlsStream<TcpStream>> =
-        imap::ClientBuilder::new("imap.cse.iitb.ac.in", 993).native_tls()?;
+        imap::ClientBuilder::new(&config.imap_server, config.imap_port).native_tls()?;
+    /* imap::ClientBuilder::new("imap.cse.iitb.ac.in", 993).native_tls()?; */
 
     // the client we have here is unauthenticated.
     // to do anything useful with the e-mails, we need to log in

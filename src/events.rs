@@ -10,7 +10,7 @@ pub trait EventManager {
 
 pub struct JSEventManager {
     pub data_file: String,
-    cached_events: HashMap<EventKey, Event>,
+    pub cached_events: HashMap<String, Event>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -19,6 +19,12 @@ struct EventKey {
     month: u32,
     day: u32,
     title: String,
+}
+
+impl EventKey {
+    fn to_string(&self) -> String {
+        format!("{}-{}-{}-{}", self.year, self.month, self.day, self.title)
+    }
 }
 
 impl JSEventManager {
@@ -30,28 +36,31 @@ impl JSEventManager {
     }
 
     pub fn load_events(&mut self) {
-        let file = std::fs::File::open(&self.data_file).unwrap();
-        let reader = std::io::BufReader::new(file);
-        let events: Vec<Event> = serde_json::from_reader(reader).unwrap();
-        let mut cached_events = HashMap::new();
-        events.iter().for_each(|event| {
-            cached_events.insert(
-                EventKey {
-                    year: event.date_time.year,
-                    month: event.date_time.month,
-                    day: event.date_time.day,
-                    title: event.text.get("title").unwrap().to_string(),
-                },
-                event.clone(),
-            );
-        });
-        self.cached_events = cached_events;
+        if let Ok(file) = std::fs::File::open(&self.data_file) {
+            let reader = std::io::BufReader::new(file);
+            let events: Vec<Event> = serde_json::from_reader(reader).unwrap();
+            let mut cached_events = HashMap::new();
+            events.iter().for_each(|event| {
+                cached_events.insert(
+                    EventKey {
+                        year: event.date_time.year,
+                        month: event.date_time.month,
+                        day: event.date_time.day,
+                        title: event.text.get("Title").unwrap().to_string(),
+                    }
+                    .to_string(),
+                    event.clone(),
+                );
+            });
+            self.cached_events = cached_events;
+        }
     }
 
     pub fn save_events(&self) {
         let file = std::fs::File::create(&self.data_file).unwrap();
         let writer = std::io::BufWriter::new(file);
-        serde_json::to_writer(writer, &self.cached_events).unwrap();
+        let cached_events: Vec<Event> = self.cached_events.values().cloned().collect();
+        serde_json::to_writer(writer, &cached_events).unwrap();
     }
 }
 
@@ -62,8 +71,13 @@ impl EventManager for JSEventManager {
                 year: event.date_time.year,
                 month: event.date_time.month,
                 day: event.date_time.day,
-                title: event.text.get("title").unwrap().to_string(),
-            },
+                title: event
+                    .text
+                    .get("Title")
+                    .unwrap_or(&"".to_string())
+                    .to_string(),
+            }
+            .to_string(),
             event,
         );
     }

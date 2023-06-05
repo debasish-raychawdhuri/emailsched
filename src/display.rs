@@ -9,15 +9,14 @@ impl Displayable for Event {
     fn display(&self) {
         println!(
             "{}-{}-{} {}:{}",
-            format!("{}", self.date_time.year).yellow(),
-            format!("{}", self.date_time.month).yellow(),
-            format!("{}", self.date_time.day).yellow(),
-            format!("{}", self.date_time.hour).green(),
-            format!("{}", self.date_time.minute).green(),
+            format!("{}{}", '\u{23f0}', self.date_time.year).yellow(),
+            format!("{:02}", self.date_time.month).yellow(),
+            format!("{:02}", self.date_time.day).yellow(),
+            format!("{:02}", self.date_time.hour).green(),
+            format!("{:02}", self.date_time.minute).green(),
         );
-        println!(
-            "           {}",
-            self.sanitize().text.get("Title").unwrap().white()
-        );
+        for (key, value) in self.sanitize().text.iter() {
+            println!("           {}:{}", key.cyan(), value.white());
+        }
     }
 }

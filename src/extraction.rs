@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -77,11 +77,12 @@ pub struct ExtractedText {
 }
 
 fn extract_text_field(
-    Email { subject, body }: Email,
+    Email { subject: _, body }: Email,
     TextField { name, regex }: TextField,
 ) -> Option<ExtractedText> {
     let re = Regex::new(&regex).unwrap();
-    let text = re.find(&body)?.as_str();
+    let caps = re.captures(&body)?;
+    let text = caps.get(1)?.as_str();
     Some(ExtractedText {
         text: text.to_string(),
         name,
@@ -122,29 +123,27 @@ pub struct DateTime {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
     pub date_time: DateTime,
-    pub text: HashMap<String, String>,
+    pub text: BTreeMap<String, String>,
 }
 impl Event {
     pub fn sanitize(&self) -> Event {
-        let mut text = self.text.clone();
+        let mut text: BTreeMap<String, String> = BTreeMap::new();
 
         let regex = Regex::new(r"\s+").unwrap();
-        text.insert("Title".to_string(), {
-            let line_text = text
-                .get("Title")
-                .unwrap()
-                .replace("\n", " ")
-                .replace("\r", " ");
-            regex.replace_all(&line_text, " ").to_string()
-        });
+        for (key, value) in self.text.iter() {
+            text.insert(key.to_string(), {
+                let line_text = value.replace("\n", " ").replace("\r", " ");
+                regex.replace_all(&line_text, " ").to_string()
+            });
+        }
         Event {
             date_time: self.date_time.clone(),
             text,
         }
     }
 }
-fn extract_all_text_fields(email: &Email, text_fields: &[TextField]) -> HashMap<String, String> {
-    let mut map = HashMap::new();
+fn extract_all_text_fields(email: &Email, text_fields: &[TextField]) -> BTreeMap<String, String> {
+    let mut map = BTreeMap::new();
     text_fields.iter().for_each(|tf| {
         let text_field = extract_text_field(email.clone(), tf.clone());
         if let Some(text_field) = text_field {

@@ -1,5 +1,7 @@
-use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
+use std::collections::HashMap;
+
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     config::{DateTimeField, EmailTemplate, TextField},
@@ -39,7 +41,7 @@ fn extract_date_time(
         subject: _subject,
     }: Email,
     date_time_format: DateTimeField,
-) -> Option<NaiveDateTime> {
+) -> Option<DateTime> {
     let re = Regex::new(&date_time_format.regex).unwrap();
     let captures = re.captures(&body)?;
     let year = captures.get(date_time_format.year_group)?.as_str();
@@ -57,21 +59,20 @@ fn extract_date_time(
     let hour = hour.parse::<u32>().ok()?;
     let minute = minute.parse::<u32>().ok()?;
     let second = second.parse::<u32>().ok().unwrap_or_default();
-    let date_time_str = format!(
-        "{:02}-{:02}-{:02} {:02}:{:02}:{:02}",
-        year % 100,
+
+    let date_time = DateTime {
+        year,
         month,
         day,
         hour,
         minute,
-        second
-    );
-    let date_time = NaiveDateTime::parse_from_str(&date_time_str, "%y-%m-%d %H:%M:%S").ok()?;
+        second,
+    };
     Some(date_time)
 }
-
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtractedText {
-    pub text: Vec<String>,
+    pub text: String,
     pub name: String,
 }
 
@@ -82,7 +83,7 @@ fn extract_text_field(
     let re = Regex::new(&regex).unwrap();
     let text = re.find(&body)?.as_str();
     Some(ExtractedText {
-        text: vec![text.to_string()],
+        text: text.to_string(),
         name,
     })
 }
@@ -108,17 +109,31 @@ fn string_to_month_number(month: &str) -> Option<u32> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Event {
-    date_time: NaiveDateTime,
-    text: Vec<String>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DateTime {
+    pub day: u32,
+    pub month: u32,
+    pub year: i32,
+    pub hour: u32,
+    pub minute: u32,
+    pub second: u32,
 }
 
-fn extract_all_text_fields(email: &Email, text_fields: &[TextField]) -> Vec<ExtractedText> {
-    text_fields
-        .iter()
-        .filter_map(|tf| extract_text_field(email.clone(), tf.clone()))
-        .collect()
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Event {
+    pub date_time: DateTime,
+    pub text: HashMap<String, String>,
+}
+
+fn extract_all_text_fields(email: &Email, text_fields: &[TextField]) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    text_fields.iter().for_each(|tf| {
+        let text_field = extract_text_field(email.clone(), tf.clone());
+        if let Some(text_field) = text_field {
+            map.insert(text_field.name, text_field.text);
+        }
+    });
+    return map;
 }
 
 fn extract_event(
@@ -129,11 +144,7 @@ fn extract_event(
     let date_time = date_time_field_formats
         .iter()
         .find_map(|dtf| extract_date_time(email.clone(), dtf.clone()));
-    let text = extract_all_text_fields(email, text_fields)
-        .iter()
-        .map(|et| et.text.clone())
-        .flatten()
-        .collect();
+    let text = extract_all_text_fields(email, text_fields);
     date_time.map(|dt| Event {
         date_time: dt,
         text,

@@ -1,0 +1,28 @@
+username = "user@domain"
+password = "password"
+imap_server = "imap.domain"
+imap_port = 993
+data_store = "data.json"
+[[email_templates]]
+	subject = "[Tt][Aa][Ll][Kk]"
+	body = "[Tt][Aa][Ll][Kk]"
+	[[email_templates.date_time_field_formats]]
+		regex = "Date\\s*\\&\\s*Time\\s*\\:.*?\\,\\s*(\\d{2})\\w{2}\\s+(\\w+)\\s+(\\d{4})\\s*\\@\\s*(\\d+).(\\d{2})\\s+hrs"
+                year_group = 3
+		month_group = 2
+		day_group = 1
+		hour_group = 4
+		minute_group = 5
+
+	[[email_templates.date_time_field_formats]]
+		regex = "Time\\s*\\:\\s+(\\d{4})-(\\d{2})-(\\d{2})\\s+(\\d{2})\\:(\\d{2})"
+                year_group = 1
+		month_group = 2
+		day_group = 3
+		hour_group = 4
+		minute_group = 5
+
+	[[email_templates.text_field_formats]]
+		name = "Title"
+		regex = "Title\\s*:(.|\\n)*?\\n\\n"
+

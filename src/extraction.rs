@@ -124,6 +124,7 @@ pub struct DateTime {
 pub struct Event {
     pub date_time: DateTime,
     pub text: BTreeMap<String, String>,
+    pub keys: Vec<String>,
 }
 impl Event {
     pub fn sanitize(&self) -> Event {
@@ -139,18 +140,24 @@ impl Event {
         Event {
             date_time: self.date_time.clone(),
             text,
+            keys: self.keys.clone(),
         }
     }
 }
-fn extract_all_text_fields(email: &Email, text_fields: &[TextField]) -> BTreeMap<String, String> {
+fn extract_all_text_fields(
+    email: &Email,
+    text_fields: &[TextField],
+) -> (BTreeMap<String, String>, Vec<String>) {
     let mut map = BTreeMap::new();
+    let mut keys = vec![];
     text_fields.iter().for_each(|tf| {
         let text_field = extract_text_field(email.clone(), tf.clone());
         if let Some(text_field) = text_field {
-            map.insert(text_field.name, text_field.text);
+            map.insert(text_field.name.clone(), text_field.text);
+            keys.push(text_field.name);
         }
     });
-    return map;
+    return (map, keys);
 }
 
 fn extract_event(
@@ -161,9 +168,10 @@ fn extract_event(
     let date_time = date_time_field_formats
         .iter()
         .find_map(|dtf| extract_date_time(email.clone(), dtf.clone()));
-    let text = extract_all_text_fields(email, text_fields);
+    let (text, keys) = extract_all_text_fields(email, text_fields);
     date_time.map(|dt| Event {
         date_time: dt,
         text,
+        keys,
     })
 }

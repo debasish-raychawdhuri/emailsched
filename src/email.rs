@@ -56,50 +56,52 @@ fn get_content_transfer_encoding_from_header(header: &str) -> TransferEncoding {
 pub fn fetch_inbox_top(
     config: &crate::config::Config,
 ) -> Result<Vec<Option<Email>>, Box<dyn Error>> {
-    let client: Client<TlsStream<TcpStream>> =
-        imap::ClientBuilder::new(&config.imap_server, config.imap_port).native_tls()?;
-    /* imap::ClientBuilder::new("imap.cse.iitb.ac.in", 993).native_tls()?; */
-
-    // the client we have here is unauthenticated.
-    // to do anything useful with the e-mails, we need to log in
-    let mut imap_session: Session<TlsStream<TcpStream>> =
-        client.login(&config.username, &config.password).unwrap();
-
-    // we want to fetch the first email in the INBOX mailbox
-    let mailbox = imap_session.select("INBOX")?;
-
-    let last = mailbox.exists;
-    //download 30 recent messages
-    println!("{} messages in INBOX", last);
-    // fetch message number 1 in this mailbox, along with its RFC822 field.
-    // RFC 822 dictates the format of the body of e-mails
-    let messages = imap_session.fetch(
-        format!("{}:{}", last - 29, last),
-        "(RFC822.TEXT RFC822.HEADER)",
-    )?;
-
     let mut message_list = Vec::new();
-    for message in messages.iter() {
-        let body = message.text().ok_or("No body found")?.to_vec();
-        let body = std::str::from_utf8(&body)
-            .expect("message was not valid utf-8")
-            .to_string();
-        let header =
-            String::from_utf8(message.header().ok_or("No header part found")?.to_vec()).unwrap();
-        let body = if get_content_transfer_encoding_from_header(&header) == TransferEncoding::Base64
-        {
-            decode_base64(&body)
-        } else {
-            body
-        };
-        let subject = get_subject_from_header(&header);
-        message_list.push(Some(Email { subject, body }));
-    }
-    dbg!(message_list.len());
-    // extract the message's body
-    // be nice to the server and log out
-    imap_session.logout()?;
+    for config in &config.server_details {
+        let client: Client<TlsStream<TcpStream>> =
+            imap::ClientBuilder::new(&config.imap_server, config.imap_port).native_tls()?;
+        /* imap::ClientBuilder::new("imap.cse.iitb.ac.in", 993).native_tls()?; */
 
+        // the client we have here is unauthenticated.
+        // to do anything useful with the e-mails, we need to log in
+        let mut imap_session: Session<TlsStream<TcpStream>> =
+            client.login(&config.username, &config.password).unwrap();
+
+        // we want to fetch the first email in the INBOX mailbox
+        let mailbox = imap_session.select("INBOX")?;
+
+        let last = mailbox.exists;
+        //download 30 recent messages
+        println!("{} messages in INBOX", last);
+        // fetch message number 1 in this mailbox, along with its RFC822 field.
+        // RFC 822 dictates the format of the body of e-mails
+        let messages = imap_session.fetch(
+            format!("{}:{}", last - 29, last),
+            "(RFC822.TEXT RFC822.HEADER)",
+        )?;
+
+        for message in messages.iter() {
+            let body = message.text().ok_or("No body found")?.to_vec();
+            let body = std::str::from_utf8(&body)
+                .expect("message was not valid utf-8")
+                .to_string();
+            let header =
+                String::from_utf8(message.header().ok_or("No header part found")?.to_vec())
+                    .unwrap();
+            let body =
+                if get_content_transfer_encoding_from_header(&header) == TransferEncoding::Base64 {
+                    decode_base64(&body)
+                } else {
+                    body
+                };
+            let subject = get_subject_from_header(&header);
+            message_list.push(Some(Email { subject, body }));
+        }
+        dbg!(message_list.len());
+        // extract the message's body
+        // be nice to the server and log out
+        imap_session.logout()?;
+    }
     Ok(message_list)
 }
 fn decode_base64(input: &str) -> String {

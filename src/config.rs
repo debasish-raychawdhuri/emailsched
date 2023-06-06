@@ -26,11 +26,16 @@ pub struct EmailTemplate {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Config {
+pub struct ServerDetails {
     pub username: String,
     pub password: String,
     pub imap_server: String,
     pub imap_port: u16,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Config {
+    pub server_details: Vec<ServerDetails>,
     pub data_store: String,
     pub email_templates: Vec<EmailTemplate>,
 }

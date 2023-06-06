@@ -11,11 +11,13 @@ use crate::{
 pub fn match_all_templates(email: &Email, config: &crate::config::Config) -> Option<Event> {
     for template in config.email_templates.iter() {
         if match_email_template(email, template) {
-            return extract_event(
+            if let Some(extraced_event) = extract_event(
                 email,
                 &template.date_time_field_formats,
                 &template.text_field_formats.clone().unwrap_or_default(),
-            );
+            ) {
+                return Some(extraced_event);
+            }
         }
     }
 

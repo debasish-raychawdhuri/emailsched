@@ -1,10 +1,6 @@
-use base64::{
-    engine::{general_purpose, Config},
-    Engine as _,
-};
+use base64::{engine::general_purpose, Engine as _};
 use imap::{Client, Session};
 use native_tls::TlsStream;
-use regex::Replacer;
 use std::{error::Error, net::TcpStream};
 
 #[derive(Eq, PartialEq, Debug)]
@@ -60,7 +56,6 @@ pub fn fetch_inbox_top(
     for config in &config.server_details {
         let client: Client<TlsStream<TcpStream>> =
             imap::ClientBuilder::new(&config.imap_server, config.imap_port).native_tls()?;
-        /* imap::ClientBuilder::new("imap.cse.iitb.ac.in", 993).native_tls()?; */
 
         // the client we have here is unauthenticated.
         // to do anything useful with the e-mails, we need to log in
@@ -76,7 +71,7 @@ pub fn fetch_inbox_top(
         // fetch message number 1 in this mailbox, along with its RFC822 field.
         // RFC 822 dictates the format of the body of e-mails
         let messages = imap_session.fetch(
-            format!("{}:{}", last - 29, last),
+            format!("{}:{}", last - config.pull_size + 1, last),
             "(RFC822.TEXT RFC822.HEADER)",
         )?;
 
@@ -97,7 +92,7 @@ pub fn fetch_inbox_top(
             let subject = get_subject_from_header(&header);
             message_list.push(Some(Email { subject, body }));
         }
-        dbg!(message_list.len());
+        dbg!(&message_list.len());
         // extract the message's body
         // be nice to the server and log out
         imap_session.logout()?;

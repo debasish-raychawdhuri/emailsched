@@ -1,13 +1,23 @@
-username = "user@domain"
-password = "password"
-imap_server = "imap.domain"
-imap_port = 993
+
 data_store = "data.json"
+[[server_details]]
+	username = "username@cse.iitb.ac.in"
+	password = "password"
+	imap_server = "imap.cse.iitb.ac.in"
+	imap_port = 993
+
+[[server_details]]
+	username = "rollno@iitb.ac.in"
+	password = "password"
+	imap_server = "imap.iitb.ac.in"
+	imap_port = 993
+
+
 [[email_templates]]
-	subject = "[Tt][Aa][Ll][Kk]"
+	subject = "([Tt][Aa][Ll][Kk])"
 	body = "[Tt][Aa][Ll][Kk]"
 	[[email_templates.date_time_field_formats]]
-		regex = "Date\\s*\\&\\s*Time\\s*\\:.*?\\,\\s*(\\d{2})\\w{2}\\s+(\\w+)\\s+(\\d{4})\\s*\\@\\s*(\\d+).(\\d{2})\\s+hrs"
+		regex = "Date\\s*\\&\\s*Time\\s*\\:[^\\d]*(\\d+)\\w{2}\\s+(\\w+)\\s+(\\d{4})\\s*[^\\s]\\s*(\\d+).(\\d{2})"
                 year_group = 3
 		month_group = 2
 		day_group = 1
@@ -21,8 +31,16 @@ data_store = "data.json"
 		day_group = 3
 		hour_group = 4
 		minute_group = 5
-
 	[[email_templates.text_field_formats]]
 		name = "Title"
-		regex = "Title\\s*:(.|\\n)*?\\n\\n"
+		regex = "Title\\s*:((.|\\n)*?)\\n\\n"
+	[[email_templates.text_field_formats]]
+		name = "Speaker"
+		regex = "Speaker\\s*:((.|\\n)*?)\\n\\n"
 
+	[[email_templates.text_field_formats]]
+		name = "Venue"
+		regex = "Venue\\s*:((.|\\n)*?)\\n\\n"
+	[[email_templates.text_field_formats]]
+		name = "Online Link"
+	

@@ -31,6 +31,7 @@ pub struct ServerDetails {
     pub password: String,
     pub imap_server: String,
     pub imap_port: u16,
+    pub pull_size: u32,
 }
 
 #[derive(Deserialize, Debug)]

@@ -23,7 +23,13 @@ struct EventKey {
 
 impl EventKey {
     fn to_string(&self) -> String {
-        format!("{}-{}-{}-{}", self.year, self.month, self.day, self.title)
+        format!(
+            "{}-{}-{}-{}",
+            self.year,
+            self.month,
+            self.day,
+            self.title.to_lowercase()
+        )
     }
 }
 
@@ -41,16 +47,14 @@ impl JSEventManager {
             let events: Vec<Event> = serde_json::from_reader(reader).unwrap();
             let mut cached_events = HashMap::new();
             events.iter().for_each(|event| {
-                cached_events.insert(
-                    EventKey {
-                        year: event.date_time.year,
-                        month: event.date_time.month,
-                        day: event.date_time.day,
-                        title: event.text.get("Title").unwrap().to_string(),
-                    }
-                    .to_string(),
-                    event.clone(),
-                );
+                let key = EventKey {
+                    year: event.date_time.year,
+                    month: event.date_time.month,
+                    day: event.date_time.day,
+                    title: event.text.get("Title").unwrap().to_string(),
+                }
+                .to_string();
+                cached_events.insert(key, event.clone());
             });
             self.cached_events = cached_events;
         }

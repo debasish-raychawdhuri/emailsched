@@ -51,6 +51,7 @@ fn extract_date_time(
     let day = captures.get(date_time_format.day_group)?.as_str();
     let hour = captures.get(date_time_format.hour_group)?.as_str();
     let minute = captures.get(date_time_format.minute_group)?.as_str();
+    dbg!(year, month, day, hour, minute);
     let second = captures
         .get(date_time_format.second_group.unwrap_or_default())?
         .as_str();
@@ -59,7 +60,7 @@ fn extract_date_time(
     let month = string_to_month_number(month)?;
     let day = day.parse::<u32>().ok()?;
     let hour = hour.parse::<u32>().ok()?;
-    let minute = minute.parse::<u32>().ok()?;
+    let minute = minute.parse::<u32>().ok().unwrap_or_default();
     let second = second.parse::<u32>().ok().unwrap_or_default();
 
     let date_time = DateTime {
